@@ -1,8 +1,12 @@
-# Application Template — Monorepo Entry Point
+# Vermittlungsbüro-Sammler — Monorepo Entry Point
 
-This repository is a **template** for standalone AI applications. A new project
-starts by copying it and deleting the example feature (see
-[Starting a new project](#starting-a-new-project)).
+This project (**`sammler`**, built from the standalone-AI-app template) finds Fasnacht
+offers and requests on public sources for Bajour's **Fasnachts-Briefing** newsletter,
+collects them in Directus, classifies them with Claude, and generates the ready-to-paste
+"+++"-ticker for the newsletter's **Vermittlungsbüro** section. The one data collection
+is `offers`; an `offers-collect` endpoint fills it (triggered by a button in the panel —
+no cron), the `vermittlungsbuero-draft` endpoint writes the ticker, and a review panel in
+the frontend drives both.
 
 It is a **monorepo** — both apps live side by side under `apps/`. It is **not** an
 npm workspace: each app is installed, built and deployed independently and has its
@@ -54,8 +58,13 @@ them is wrong even if it works.
    of the checklist below. Never rename one back to a bare `directus`, `postgres` or
    `front`.
 4. **Self-contained.** Postgres, Directus and the frontend are the only services. No
-   Redis, no queue broker, no external cron host, no side-car. The Claude API is the
-   single outbound dependency; a new one needs a deliberate decision, not a commit.
+   Redis, no queue broker, no external cron host, no side-car. Two outbound
+   dependencies, both deliberate: the **Claude API** for every LLM call, and the
+   **wepublish crawler** (`crawler.wepublish.dev`, URL→Markdown) that `offers-collect`
+   uses to read the public sources (fraufasnacht.ch, Unimarkt, fasnacht.ch, Facebook).
+   Both are reached through one module each (`shared/claude.ts`, `shared/crawler.ts`),
+   GET/POST only, with per-source failures logged and skipped. A third outbound
+   dependency needs the same kind of deliberate decision, not a commit.
 5. **No persistent file storage outside Directus.** Application code never writes to
    the filesystem — no temp caches, no JSON state files, no log files, no
    `./data`. State goes into a Directus collection; binaries go through Directus

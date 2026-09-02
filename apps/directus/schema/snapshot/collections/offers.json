@@ -1,0 +1,28 @@
+{
+  "collection": "offers",
+  "meta": {
+    "accountability": "all",
+    "archive_app_filter": true,
+    "archive_field": "status",
+    "archive_value": "dismissed",
+    "collapse": "open",
+    "collection": "offers",
+    "color": null,
+    "display_template": "{{ title }}",
+    "group": null,
+    "hidden": false,
+    "icon": "storefront",
+    "item_duplication_fields": null,
+    "note": "Gesammelte Fasnachts-Inserate fuer das Vermittlungsbuero des Fasnachts-Briefings.",
+    "preview_url": null,
+    "singleton": false,
+    "sort": null,
+    "sort_field": null,
+    "translations": null,
+    "unarchive_value": "new",
+    "versioning": false
+  },
+  "schema": {
+    "name": "offers"
+  }
+}

@@ -22,21 +22,18 @@
     "entries": [
       {
         "type": "endpoint",
-        "name": "notes-summary",
-        "source": "src/endpoints/notes-summary/index.ts"
+        "name": "vermittlungsbuero-draft",
+        "source": "src/endpoints/vermittlungsbuero-draft/index.ts"
       },
       {
         "type": "hook",
-        "name": "notes-normalize",
-        "source": "src/hooks/notes-normalize/index.ts"
+        "name": "offers-normalize",
+        "source": "src/hooks/offers-normalize/index.ts"
       },
       {
-        "type": "operation",
-        "name": "notes-summarize-pending",
-        "source": {
-          "app": "src/operations/notes-summarize-pending/app.ts",
-          "api": "src/operations/notes-summarize-pending/api.ts"
-        }
+        "type": "endpoint",
+        "name": "offers-collect",
+        "source": "src/endpoints/offers-collect/index.ts"
       }
     ],
     "host": "^11.0.0"

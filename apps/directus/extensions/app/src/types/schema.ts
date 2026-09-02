@@ -9,25 +9,60 @@
 // generates its own types from the GraphQL schema (`npm run codegen` in
 // apps/front). One data model, two generated views of it.
 
-export type NoteStatus = 'draft' | 'published' | 'archived'
+// Vermittlungsbüro: one Fasnacht classified (offer or request) collected from a
+// public source (or entered by hand), classified by Claude for the briefing ticker.
 
-export interface Note {
+export type OfferStatus =
+  'new' | 'reviewed' | 'accepted' | 'dismissed' | 'published'
+
+/**
+ * Where an offer came from. `manual` = entered in the panel (Facebook, reader mail);
+ * `custom` = scraped from a source the redaction added in the `quellen` collection.
+ */
+export type OfferSource =
+  'fraufasnacht' | 'unimarkt' | 'fasnacht_ch' | 'facebook' | 'manual' | 'custom'
+
+/** What kind of classified this is, decided by Claude. */
+export type OfferCategory = 'sucht' | 'bietet' | 'verkauft'
+
+export interface Offer {
   id: string
-  status: NoteStatus
+  status: OfferStatus
+  source: OfferSource
+  /** Stable per-source key (inserat number, post slug, feed guid); null for manual. */
+  source_id: string | null
+  /** Dedup key. Unique in Postgres, which permits many NULLs (manual entries). */
+  source_url: string | null
   title: string
-  body: string | null
+  raw_text: string | null
+  contact: string | null
+  /** Date the source showed for the listing (not when we found it). */
+  listed_at: string | null
   /**
-   * Written only by the notes-summary endpoint and the notes-summarize-pending
-   * operation. `ai_summary_tags` is a `cast-csv` column, so it is a string array
-   * on the way in and out — never a joined string.
+   * Written only by the offers-collect operation. Each part in its own field so the
+   * frontend never parses a packed string apart.
    */
+  ai_category: OfferCategory | null
   ai_summary: string | null
-  ai_summary_tags: string[] | null
-  ai_summary_generated_at: string | null
+  ai_audience: string | null
+  /** True for a long-valid search call (e.g. "sucht unveröffentlichte Trommelmärsche"). */
+  ai_evergreen: boolean | null
+  ai_generated_at: string | null
   date_created: string | null
   date_updated: string | null
 }
 
+/** A source the redaction added in the dashboard for offers-collect to search. */
+export interface Quelle {
+  id: string
+  name: string
+  url: string
+  needs_playwright: boolean
+  active: boolean
+  date_created: string | null
+}
+
 export interface Schema {
-  notes: Note[]
+  offers: Offer[]
+  quellen: Quelle[]
 }

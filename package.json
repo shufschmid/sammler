@@ -1,8 +1,8 @@
 {
-  "name": "app-template",
+  "name": "sammler",
   "version": "1.0.0",
   "private": true,
-  "description": "Template for standalone AI applications: Directus + Postgres backend (apps/directus) and a Next + MUI frontend (apps/front). Not an npm workspace — each app installs and builds independently. This root package owns the shared pre-commit tooling (husky + lint-staged + prettier) and the docker-compose shortcuts.",
+  "description": "Vermittlungsbüro-Sammler für Bajours Fasnachts-Briefing: findet Fasnachts-Angebote und -Gesuche auf öffentlichen Quellen, sammelt sie in Directus (apps/directus), klassifiziert sie mit Claude und generiert einen fertigen Ticker-Entwurf im Redaktions-Frontend (apps/front). Kein npm-Workspace — beide Apps installieren und bauen unabhängig.",
   "scripts": {
     "prepare": "husky",
     "up": "docker compose up --build -d",

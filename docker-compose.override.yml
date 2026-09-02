@@ -1,9 +1,9 @@
 # docker-compose.override.yml
 # Local dev only. Dokploy reads only docker-compose.yml, so it ignores this.
 services:
-  appname-directus:
+  sammler-directus:
     ports:
       - '${DIRECTUS_PORT:-8055}:8055'
-  appname-front:
+  sammler-front:
     ports:
       - '${FRONT_PORT:-3000}:3000'

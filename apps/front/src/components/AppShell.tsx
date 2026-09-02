@@ -9,7 +9,7 @@ import Container from '@mui/material/Container'
 import Toolbar from '@mui/material/Toolbar'
 import Typography from '@mui/material/Typography'
 import { LoginForm } from './LoginForm'
-import { NotesPanel } from './NotesPanel'
+import { OffersPanel } from './OffersPanel'
 
 interface SessionUser {
   email: string
@@ -77,7 +77,7 @@ export function AppShell() {
       >
         <Toolbar>
           <Typography variant="h1" component="h1" sx={{ flexGrow: 1, fontSize: '1.25rem' }}>
-            Notizen
+            Vermittlungsbuero-Sammler
           </Typography>
           <Typography
             variant="body2"
@@ -93,7 +93,7 @@ export function AppShell() {
       </AppBar>
 
       <Container maxWidth="md" sx={{ py: 3 }}>
-        <NotesPanel />
+        <OffersPanel />
       </Container>
     </>
   )

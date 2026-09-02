@@ -13,11 +13,10 @@ here.
 apps/directus/
 ├── extensions/app/          ← ALL server-side logic (one bundle, own package.json)
 │   └── src/
-│       ├── shared/          claude.ts · env.ts · http.ts   (reusable, no domain logic)
-│       ├── endpoints/       custom HTTP routes
-│       ├── hooks/           filter/action hooks on collection writes
-│       ├── operations/      steps a Flow can call (this is how cron works)
-│       └── types/schema.ts  typed view of the collections
+│       ├── shared/          claude.ts · crawler.ts · env.ts · http.ts   (reusable, no domain logic)
+│       ├── endpoints/       offers-collect (scrape+classify) · vermittlungsbuero-draft (ticker)
+│       ├── hooks/           offers-normalize (trim + AI-cache invalidation)
+│       └── types/schema.ts  typed view of the collections (offers)
 ├── extensions/.registry/    marketplace extension: TypeScript type generator
 ├── migrations/              empty by design — row data only, never the model
 ├── schema/                  directus-sync dump — the data model, single source of truth
@@ -227,6 +226,46 @@ const validated = parseSummary(answer) // never trust the shape
 
 Read them through `shared/env.ts` (`requireEnv` names the missing variable in the
 error) — never `process.env` scattered across handlers.
+
+This project's own variables, besides `ANTHROPIC_*`:
+
+- `CRAWLER_URL` — the crawler base, default `https://crawler.wepublish.dev`
+  (`optionalEnv`).
+- `CRAWLER_TOKEN` — bearer for the crawler. Optional at boot: without it the
+  `offers-collect` operation logs and skips the web sources (`crawlerConfigured()`),
+  and only manual entries are classified. `requireEnv` inside `shared/crawler.ts` fires
+  only when a scrape is actually attempted.
+
+## The Vermittlungsbüro feature
+
+Two collections in `schema/`: `offers` (the collected classifieds) and `quellen`
+(extra sources the redaction adds in the dashboard). Three bundle entries drive it:
+
+- `endpoints/offers-collect` — the collection run, triggered on demand from the panel's
+  "Inserate suchen" button (no cron — the redaction decides when to fetch). It returns
+  **202 immediately** and does the work fire-and-forget (a full run takes minutes), with
+  a `running` guard against overlap; the panel polls the list. The shared core is
+  `run.ts` (`runCollect`): for each built-in source adapter (`sources/`: fraufasnacht,
+  unimarkt, fasnacht_ch, facebook) it scrapes an entry page through `shared/crawler.ts`,
+  `discover()`s candidate detail URLs, scrapes each new one and runs a single Claude call
+  (`extract.ts`) that decides `isOffer`/`evergreen` and produces the ticker fields. Then
+  it walks the active `quellen`, scraping each and extracting **many** offers per page
+  (`parseExtractionList`), keyed `custom:<quelle>:<slug>`. A final pass classifies manual
+  entries. Dedup on `source_url` / `source`+`source_id`; bounded by `collectLimit` /
+  `classifyLimit`; one dead source is logged and skipped.
+- `hooks/offers-normalize` — trims the human fields and clears the `ai_*` classification
+  when `title`/`raw_text` changes, so a stale summary cannot outlive its text.
+- `endpoints/vermittlungsbuero-draft` — `POST` with `{ ids }`, authenticated; asks
+  Claude for the "+++"-ticker paragraph in the briefing house style (with per-item source
+  and link) and returns it.
+
+Offer lifecycle: `new → reviewed → accepted → dismissed`, plus `published` — set when the
+redaction marks a generated ticker as used, which drops those offers from the pool.
+`ai_evergreen` flags a long-valid search call (e.g. "sucht unveröffentlichte
+Trommelmärsche") so the UI keeps it interesting past the one-month recency window.
+
+Source adapters are pure Markdown parsers (fixture-tested); everything else follows the
+same prompt-module + validate + fields-mapping split as the rest of the bundle.
 
 ## Types
 
