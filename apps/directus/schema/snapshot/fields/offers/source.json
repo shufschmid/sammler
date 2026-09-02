@@ -1,0 +1,90 @@
+{
+  "collection": "offers",
+  "field": "source",
+  "type": "string",
+  "meta": {
+    "collection": "offers",
+    "conditions": null,
+    "display": "labels",
+    "display_options": {
+      "choices": [
+        {
+          "text": "fraufasnacht.ch",
+          "value": "fraufasnacht"
+        },
+        {
+          "text": "Unimarkt",
+          "value": "unimarkt"
+        },
+        {
+          "text": "fasnacht.ch",
+          "value": "fasnacht_ch"
+        },
+        {
+          "text": "Facebook",
+          "value": "facebook"
+        },
+        {
+          "text": "Manuell",
+          "value": "manual"
+        }
+      ]
+    },
+    "field": "source",
+    "group": null,
+    "hidden": false,
+    "interface": "select-dropdown",
+    "note": "Herkunft des Inserats.",
+    "options": {
+      "choices": [
+        {
+          "text": "fraufasnacht.ch",
+          "value": "fraufasnacht"
+        },
+        {
+          "text": "Unimarkt",
+          "value": "unimarkt"
+        },
+        {
+          "text": "fasnacht.ch",
+          "value": "fasnacht_ch"
+        },
+        {
+          "text": "Facebook",
+          "value": "facebook"
+        },
+        {
+          "text": "Manuell",
+          "value": "manual"
+        }
+      ]
+    },
+    "readonly": false,
+    "required": false,
+    "searchable": true,
+    "sort": 3,
+    "special": null,
+    "translations": null,
+    "validation": null,
+    "validation_message": null,
+    "width": "full"
+  },
+  "schema": {
+    "name": "source",
+    "table": "offers",
+    "data_type": "character varying",
+    "default_value": null,
+    "max_length": 32,
+    "numeric_precision": null,
+    "numeric_scale": null,
+    "is_nullable": false,
+    "is_unique": false,
+    "is_indexed": false,
+    "is_primary_key": false,
+    "is_generated": false,
+    "generation_expression": null,
+    "has_auto_increment": false,
+    "foreign_key_table": null,
+    "foreign_key_column": null
+  }
+}

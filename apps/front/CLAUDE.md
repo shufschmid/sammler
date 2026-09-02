@@ -29,14 +29,15 @@ apps/front/src/
 │   └── api/                 route handlers — proxies, nothing else
 │       ├── auth/{login,logout,session}/
 │       ├── graphql/         the browser's only data endpoint
-│       ├── notes/[id]/summary/   calls the extension endpoint
+│       ├── offers/collect/  triggers a collection run (the "Inserate suchen" button)
+│       ├── vermittlungsbuero/draft/   calls the extension endpoint (ticker text)
 │       └── health/          docker healthcheck
-├── components/              MUI components; *.test.tsx next to them
-├── graphql/                 gql documents + result types, one file per collection
+├── components/              MUI components (OffersPanel + presentational cards); *.test.tsx next to them
+├── graphql/                 gql documents + result types, one file per collection (offers.ts)
 └── lib/
     ├── apollo.ts            client factory (points at /api/graphql)
     ├── theme.ts             the single MUI theme
-    ├── notes.ts             pure presentation helpers (tested)
+    ├── offers.ts            pure presentation helpers (tested)
     ├── directus.server.ts   server-only: login/refresh/logout/fetch
     ├── session.server.ts    server-only: the two httpOnly cookies
     └── proxy.server.ts      server-only: browser request → Directus request
@@ -64,14 +65,15 @@ component is a build error, which is what keeps tokens off the browser.
 Reads and writes to collections go through Apollo against `/api/graphql`:
 
 ```ts
-const { data, loading, error, refetch } = useQuery<NotesQueryResult>(NOTES_QUERY, {
+const { data, loading, error, refetch } = useQuery<OffersQueryResult>(OFFERS_QUERY, {
+  variables: { filter: filterVariable(filter) },
   fetchPolicy: LIVE_FETCH_POLICY
 })
 ```
 
 - Documents live in `src/graphql/*.ts`, never inline in a component. Directus derives
-  the API from the data model: collection `notes` gives `notes`, `notes_by_id`,
-  `create_notes_item(s)`, `update_notes_item(s)`, `delete_notes_item(s)`. Explore it
+  the API from the data model: collection `offers` gives `offers`, `offers_by_id`,
+  `create_offers_item(s)`, `update_offers_item(s)`, `delete_offers_item(s)`. Explore it
   at http://localhost:8055/graphql.
 - Apollo Client 4: `ApolloClient`, `InMemoryCache`, `HttpLink`, `gql` come from
   `@apollo/client`; the hooks from `@apollo/client/react`. Default options require a
@@ -84,7 +86,7 @@ const { data, loading, error, refetch } = useQuery<NotesQueryResult>(NOTES_QUERY
   data-fetching components live below a gate that starts in a loading state
   (`AppShell` checks the session in the browser first). Keep it that way.
 - Anything that is not a plain collection read/write is a `fetch` to a route handler
-  that forwards to an extension endpoint — see `handleSummarize` in `NotesPanel.tsx`.
+  that forwards to an extension endpoint — see `handleGenerate` in `OffersPanel.tsx`.
 
 ## Adding a page
 
@@ -114,10 +116,13 @@ Thin. A handler validates its input, calls `proxyToDirectus`, returns the respon
 No prompts, no calculations, no writes assembled by hand.
 
 ```ts
-export async function POST(_request: Request, { params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params // params is a Promise in Next 15+
-  if (!/^[0-9a-f-]{36}$/i.test(id)) return problem(400, 'Ungueltige Notiz-ID.')
-  return proxyToDirectus(`/notes-summary/${id}`, { method: 'POST' })
+export async function POST(request: Request) {
+  const body = (await request.json().catch(() => null)) as { ids?: unknown } | null
+  const ids = Array.isArray(body?.ids)
+    ? body.ids.filter((id): id is string => typeof id === 'string' && /^[0-9a-f-]{36}$/i.test(id))
+    : []
+  if (ids.length === 0) return problem(400, 'Keine gueltigen Inserate ausgewaehlt.')
+  return proxyToDirectus('/vermittlungsbuero-draft', { method: 'POST', body: JSON.stringify({ ids }) })
 }
 ```
 
@@ -136,11 +141,12 @@ replayed after a token refresh.
 
 ## Testing
 
-- Pure helpers in `src/lib/*.ts` get plain unit tests (`notes.test.ts`).
+- Pure helpers in `src/lib/*.ts` get plain unit tests (`offers.test.ts`).
 - Components get Testing Library tests driven by roles and visible text
-  (`NoteCard.test.tsx`) — that is also how the accessible name gets checked.
+  (`OfferCard.test.tsx`, `TickerDraft.test.tsx`) — that is also how the accessible name
+  gets checked.
 - Keep components presentational (props in, callbacks out); the one component that
-  fetches (`NotesPanel`) stays thin so everything else is trivially testable.
+  fetches (`OffersPanel`) stays thin so everything else is trivially testable.
 
 ## Environment
 
@@ -148,6 +154,6 @@ replayed after a token refresh.
 come from the root `.env` via `docker-compose.yml`.
 
 - `DIRECTUS_URL` — where Directus is reachable **from this server process**
-  (`http://appname-directus:8055` in Docker — the service name, renamed per
-  project). The browser never uses it.
+  (`http://sammler-directus:8055` in Docker — the compose service name). The browser
+  never uses it.
 - No token, no Claude key. Both live in the backend.

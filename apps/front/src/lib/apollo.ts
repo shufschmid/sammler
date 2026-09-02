@@ -14,6 +14,6 @@ export function makeApolloClient(): ApolloClient {
 
 // Apollo Client 4 requires default options to be declared through a module
 // augmentation before they can be set on the client, so fetch policies are passed
-// per hook instead — see NOTES_FETCH_POLICY below.
+// per hook instead — see LIVE_FETCH_POLICY below.
 // https://www.apollographql.com/docs/react/data/typescript#declaring-default-options-for-type-safety
 export const LIVE_FETCH_POLICY = 'cache-and-network' as const
