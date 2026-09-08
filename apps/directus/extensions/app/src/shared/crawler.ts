@@ -31,6 +31,13 @@ export class CrawlerError extends Error {
  * CRAWLER_TOKEN — callers that treat the crawler as optional must check for the token
  * (via optionalEnv) before invoking anything that uses this.
  */
+const MAX_RETRIES = 4
+
+/** Small helper so callers can space out their crawler calls to stay under the limit. */
+export function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
 export const postToCrawler: CrawlerFetcher = async (path, body) => {
   const base = optionalEnv('CRAWLER_URL', DEFAULT_CRAWLER_URL).replace(
     /\/+$/,
@@ -38,30 +45,45 @@ export const postToCrawler: CrawlerFetcher = async (path, body) => {
   )
   const token = requireEnv('CRAWLER_TOKEN')
 
-  let response: Response
-  try {
-    response = await fetch(`${base}${path}`, {
-      method: 'POST',
-      headers: {
-        authorization: `Bearer ${token}`,
-        'content-type': 'application/json'
-      },
-      body: JSON.stringify(body),
-      signal: AbortSignal.timeout(DEFAULT_TIMEOUT_MS)
-    })
-  } catch (cause) {
-    // Network error or timeout — never leak the token-bearing request object.
-    throw new CrawlerError(`Crawler request to ${path} failed`, cause)
-  }
+  // A full collect run fires many scrapes in a row; the crawler rate-limits bursts with
+  // 429. Retry those with a backoff (honouring Retry-After) so one run does not throttle
+  // itself into empty results. Other errors fail fast.
+  for (let attempt = 0; ; attempt++) {
+    let response: Response
+    try {
+      response = await fetch(`${base}${path}`, {
+        method: 'POST',
+        headers: {
+          authorization: `Bearer ${token}`,
+          'content-type': 'application/json'
+        },
+        body: JSON.stringify(body),
+        signal: AbortSignal.timeout(DEFAULT_TIMEOUT_MS)
+      })
+    } catch (cause) {
+      // Network error or timeout — never leak the token-bearing request object.
+      throw new CrawlerError(`Crawler request to ${path} failed`, cause)
+    }
 
-  if (!response.ok) {
-    throw new CrawlerError(`Crawler answered ${response.status} for ${path}`)
-  }
+    if (response.status === 429 && attempt < MAX_RETRIES) {
+      const retryAfter = Number(response.headers.get('retry-after'))
+      const waitMs =
+        Number.isFinite(retryAfter) && retryAfter > 0
+          ? retryAfter * 1000
+          : 1500 * (attempt + 1)
+      await sleep(waitMs)
+      continue
+    }
 
-  try {
-    return await response.json()
-  } catch (cause) {
-    throw new CrawlerError(`Crawler returned no JSON for ${path}`, cause)
+    if (!response.ok) {
+      throw new CrawlerError(`Crawler answered ${response.status} for ${path}`)
+    }
+
+    try {
+      return await response.json()
+    } catch (cause) {
+      throw new CrawlerError(`Crawler returned no JSON for ${path}`, cause)
+    }
   }
 }
 
