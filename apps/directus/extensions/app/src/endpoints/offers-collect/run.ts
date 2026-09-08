@@ -1,6 +1,10 @@
 import { completeJson } from '../../shared/claude'
-import { crawlerConfigured, scrape } from '../../shared/crawler'
+import { crawlerConfigured, scrape, sleep } from '../../shared/crawler'
 import type { Offer, Quelle } from '../../types/schema'
+
+// A short pause between crawler calls so a full run stays under the crawler's rate limit
+// (the 429 retry in shared/crawler.ts is the backstop when this is not enough).
+const SCRAPE_SPACING_MS = 500
 import {
   offerKey,
   selectNewCandidates,
@@ -109,6 +113,7 @@ export async function runCollect(
       try {
         let found = 0
         for (const entryUrl of adapter.entryUrls) {
+          await sleep(SCRAPE_SPACING_MS)
           const page = await scrape(entryUrl, {
             forcePlaywright: adapter.needsPlaywrightForEntry
           })
@@ -139,6 +144,7 @@ export async function runCollect(
 
   for (const candidate of selected) {
     try {
+      await sleep(SCRAPE_SPACING_MS)
       const page = await scrape(candidate.sourceUrl, {
         forcePlaywright: candidate.needsPlaywright
       })
@@ -192,6 +198,7 @@ export async function runCollect(
     let customFound = 0
     for (const quelle of quellen) {
       try {
+        await sleep(SCRAPE_SPACING_MS)
         const page = await scrape(quelle.url, {
           forcePlaywright: quelle.needs_playwright === true
         })
