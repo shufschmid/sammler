@@ -43,11 +43,15 @@ export interface CollectOptions {
 
 export interface CollectSummary {
   knownBefore: number
+  /** Whether a crawler token is configured — false explains an empty run at a glance. */
+  crawlerConfigured: boolean
   discoveredBySource: Record<string, number>
   created: number
   classified: number
   skipped: number
   renderers: string[]
+  /** First few failure reasons (source/candidate errors), for diagnosis without logs. */
+  errors: string[]
 }
 
 // The bits of the Directus context this needs — satisfied by both an endpoint and an
@@ -104,11 +108,20 @@ export async function runCollect(
   const modelOption = model ? { model } : {}
   const discoveredBySource: Record<string, number> = {}
   const renderers = new Set<string>()
+  const configured = crawlerConfigured()
+
+  // First few failure reasons, surfaced in the summary so a run can be diagnosed without
+  // reading container logs.
+  const errors: string[] = []
+  const noteError = (context: string, error: unknown) => {
+    if (errors.length >= 8) return
+    errors.push(`${context}: ${error instanceof Error ? error.message : String(error)}`)
+  }
 
   // 1. Discovery. Without a crawler token the web sources are simply skipped; the
   //    manual-entry classification pass below still runs.
   const allCandidates: Candidate[] = []
-  if (crawlerConfigured()) {
+  if (configured) {
     for (const adapter of adaptersFor(toSourceList(sources))) {
       try {
         let found = 0
@@ -125,6 +138,7 @@ export async function runCollect(
         discoveredBySource[adapter.source] = found
       } catch (error) {
         // A dead source must not abort the run — the next run retries it.
+        noteError(`Quelle ${adapter.source}`, error)
         logger.warn(error, `offers-collect: source ${adapter.source} failed`)
       }
     }
@@ -176,6 +190,7 @@ export async function runCollect(
     } catch (error) {
       // Includes the unique-constraint race on source_url when runs overlap.
       skipped += 1
+      noteError('Kandidat', error)
       logger.warn(
         error,
         `offers-collect: candidate ${candidate.sourceUrl} skipped`
@@ -186,7 +201,7 @@ export async function runCollect(
   // 2b. Custom sources the redaction added in the dashboard. Each is one page that may
   //     list several offers, so Claude extracts an array (extract-many). Offers are keyed
   //     by (custom, quelle:slug) and get a per-offer anchor URL for dedup.
-  if (crawlerConfigured()) {
+  if (configured) {
     const quellen = (await new ItemsService('quellen', {
       schema: await getSchema()
     }).readByQuery({
@@ -247,11 +262,13 @@ export async function runCollect(
             customFound += 1
           } catch (error) {
             skipped += 1
+            noteError('Custom-Inserat', error)
             logger.warn(error, `offers-collect: custom offer ${url} skipped`)
           }
         }
       } catch (error) {
         // One dead custom source must not abort the run.
+        noteError(`Quelle ${quelle.name}`, error)
         logger.warn(error, `offers-collect: quelle ${quelle.url} failed`)
       }
     }
@@ -289,16 +306,19 @@ export async function runCollect(
       )
       classified += 1
     } catch (error) {
+      noteError('Klassifikation', error)
       logger.warn(error, `offers-collect: could not classify offer ${offer.id}`)
     }
   }
 
   return {
     knownBefore: known.length,
+    crawlerConfigured: configured,
     discoveredBySource,
     created,
     classified,
     skipped,
-    renderers: [...renderers]
+    renderers: [...renderers],
+    errors
   }
 }
