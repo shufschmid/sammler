@@ -1,0 +1,66 @@
+{
+  "collection": "quellen",
+  "field": "collector",
+  "type": "string",
+  "meta": {
+    "collection": "quellen",
+    "conditions": null,
+    "display": "labels",
+    "display_options": {
+      "choices": [
+        {
+          "text": "Vermittlungsbuero",
+          "value": "vermittlungsbuero"
+        },
+        {
+          "text": "Wohnungen",
+          "value": "wohnungen"
+        }
+      ]
+    },
+    "field": "collector",
+    "group": null,
+    "hidden": false,
+    "interface": "select-dropdown",
+    "note": "Zu welcher Sammel-Aktivitaet gehoert diese Quelle.",
+    "options": {
+      "choices": [
+        {
+          "text": "Vermittlungsbuero",
+          "value": "vermittlungsbuero"
+        },
+        {
+          "text": "Wohnungen",
+          "value": "wohnungen"
+        }
+      ]
+    },
+    "readonly": false,
+    "required": false,
+    "searchable": true,
+    "sort": 2,
+    "special": null,
+    "translations": null,
+    "validation": null,
+    "validation_message": null,
+    "width": "half"
+  },
+  "schema": {
+    "name": "collector",
+    "table": "quellen",
+    "data_type": "character varying",
+    "default_value": "vermittlungsbuero",
+    "max_length": 32,
+    "numeric_precision": null,
+    "numeric_scale": null,
+    "is_nullable": false,
+    "is_unique": false,
+    "is_indexed": false,
+    "is_primary_key": false,
+    "is_generated": false,
+    "generation_expression": null,
+    "has_auto_increment": false,
+    "foreign_key_table": null,
+    "foreign_key_column": null
+  }
+}

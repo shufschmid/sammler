@@ -1,1 +1,17 @@
-[]
+[
+  {
+    "name": "Wohnungen sammeln",
+    "key": "wohnungen_sammeln",
+    "type": "wohnungen-weekly",
+    "position_x": 19,
+    "position_y": 1,
+    "options": {
+      "collectLimit": 40,
+      "model": ""
+    },
+    "resolve": null,
+    "reject": null,
+    "flow": "0b6bfe49-49ec-4f45-a432-991fc8f3bc33",
+    "_syncId": "061eac32-ba03-45aa-b563-576f7bb87470"
+  }
+]

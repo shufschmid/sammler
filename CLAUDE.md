@@ -1,12 +1,25 @@
-# Vermittlungsbüro-Sammler — Monorepo Entry Point
+# Sammler — Monorepo Entry Point
 
-This project (**`sammler`**, built from the standalone-AI-app template) finds Fasnacht
-offers and requests on public sources for Bajour's **Fasnachts-Briefing** newsletter,
-collects them in Directus, classifies them with Claude, and generates the ready-to-paste
-"+++"-ticker for the newsletter's **Vermittlungsbüro** section. The one data collection
-is `offers`; an `offers-collect` endpoint fills it (triggered by a button in the panel —
-no cron), the `vermittlungsbuero-draft` endpoint writes the ticker, and a review panel in
-the frontend drives both.
+This project (**`sammler`**, built from the standalone-AI-app template) is a
+**multi-collector platform**: it finds things on public sources for Bajour's
+newsletters, collects them in Directus, classifies/evaluates them with Claude, and
+generates ready-to-paste text. Each collector is a parallel, typed collection sharing
+common infrastructure (crawler, Claude, the `collect-pages` helper, the mailbox, the
+nav shell) — not a generic engine. Two collectors run today:
+
+- **Vermittlungsbüro** (collection `offers`) — Fasnacht offers/requests for the
+  **Fasnachts-Briefing**. `offers-collect` fills it (button, no cron),
+  `vermittlungsbuero-draft` writes the "+++"-ticker.
+- **Wohnungen** (collection `wohnungen`) — cheap Basel flats for the **Basel Briefing**
+  "Günstige Wohnungen" box. `wohnungen-collect` fills it (button **and** a weekly
+  Schedule Flow, Tue 12:30), scraping cooperative/Unimarkt/Immobilien-BS pages and
+  reading newsletter/reader mail over IMAP; `wohnungen-from-url` captures a single
+  pasted listing; `wohnungen-draft` writes the box. Portals (Homegate/ImmoScout/Flatfox)
+  are deliberately **not** auto-scraped — the redaction adds those via "Inserat per Link
+  erfassen". Criteria (`criteria.ts`) and rent/m² are computed in a hook, never by Claude.
+
+A review panel per collector drives each, behind a nav switcher in the AppShell. To add
+a third collector, follow the recipe at the end of this file.
 
 It is a **monorepo** — both apps live side by side under `apps/`. It is **not** an
 npm workspace: each app is installed, built and deployed independently and has its
@@ -58,13 +71,15 @@ them is wrong even if it works.
    of the checklist below. Never rename one back to a bare `directus`, `postgres` or
    `front`.
 4. **Self-contained.** Postgres, Directus and the frontend are the only services. No
-   Redis, no queue broker, no external cron host, no side-car. Two outbound
-   dependencies, both deliberate: the **Claude API** for every LLM call, and the
-   **wepublish crawler** (`crawler.wepublish.dev`, URL→Markdown) that `offers-collect`
-   uses to read the public sources (fraufasnacht.ch, Unimarkt, fasnacht.ch, Facebook).
-   Both are reached through one module each (`shared/claude.ts`, `shared/crawler.ts`),
-   GET/POST only, with per-source failures logged and skipped. A third outbound
-   dependency needs the same kind of deliberate decision, not a commit.
+   Redis, no queue broker, no external cron host, no side-car. **Three** outbound
+   dependencies, all deliberate: the **Claude API** for every LLM call; the
+   **wepublish crawler** (`crawler.wepublish.dev`, URL→Markdown) that the collect runs
+   use to read public sources; and the **IMAP mailbox** (wepublish infra) that
+   `wohnungen-collect` reads for newsletter/reader mail. Each is reached through one
+   module only (`shared/claude.ts`, `shared/crawler.ts`, `shared/mailbox.ts`), with
+   per-source failures logged and skipped, and each optional at boot (missing token/host
+   → that pass is skipped). A fourth outbound dependency needs the same kind of
+   deliberate decision, not a commit.
 5. **No persistent file storage outside Directus.** Application code never writes to
    the filesystem — no temp caches, no JSON state files, no log files, no
    `./data`. State goes into a Directus collection; binaries go through Directus
@@ -149,6 +164,34 @@ built bundle, and without the watcher your changes are never picked up.
 
 - Frontend: http://localhost:3000
 - Directus admin: http://localhost:8055 — `admin@wepublish.ch` / `admin123`
+
+## Adding a new Sammler-Aktivität (collector)
+
+Copy the shape of the `wohnungen` collector — it is the reference for a second activity
+on shared infrastructure. Steps, in order:
+
+1. **Collection** `<thing>` in the admin UI (status, `source`, `source_url` unique =
+   dedup, the typed fields the output needs, plus `ai_*` fields), then
+   `npm run schema:dump`. Add the type to `extensions/app/src/types/schema.ts`.
+2. **Sources** `endpoints/<thing>-collect/sources.ts` — a `PageSource[]` of built-in
+   pages (and a `classifySourceUrl` if you support pasted links). Custom user sources
+   come from the `quellen` collection filtered by a new `collector` enum value.
+3. **Extraction** `extract.ts` — Claude prompts + pure parsers (`parse…`), tested. The
+   run weaves nothing Claude invents: URLs come from stored data.
+4. **Rules** in a pure, tested module (e.g. `criteria.ts`); apply them in a
+   `hooks/<thing>-normalize/` filter — never compute the verdict in Claude.
+5. **Run** `run.ts` uses `shared/collect-pages.ts` (`collectFromPages`) for the web pass,
+   optionally a `shared/mailbox.ts` pass; `index.ts` = POST (202 fire-and-forget) + GET
+   status, mirroring `offers-collect`.
+6. **Draft** `endpoints/<thing>-draft/` if the activity produces text (Claude writes
+   sentence + `linkText`, server weaves the link, returns `{text, html}`).
+7. **Schedule** (optional) a Flow with a Schedule trigger + a
+   `operations/<thing>-…/` operation calling the same `run` — committed via `schema:dump`.
+8. **Register** every endpoint/hook/operation in
+   `extensions/app/package.json` (bundle entry names must be unique across the bundle).
+9. **Frontend** a `<Thing>Panel.tsx` (copy `WohnungenPanel`), `graphql/<thing>.ts`,
+   `lib/<thing>.ts` (+ tests), route proxies under `app/api/<thing>/…`, add a tab in
+   `AppShell.tsx`, and pass `collector="<thing>"` to `SourcesManager`.
 
 ## Starting a new project from this template
 

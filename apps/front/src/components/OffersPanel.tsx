@@ -187,7 +187,7 @@ export function OffersPanel() {
     <Stack spacing={2}>
       <OfferComposer busy={createState.loading} onCreate={handleCreate} />
 
-      <SourcesManager />
+      <SourcesManager collector="vermittlungsbuero" />
 
       <Stack
         direction="row"

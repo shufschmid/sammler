@@ -31,13 +31,15 @@ apps/front/src/
 │       ├── graphql/         the browser's only data endpoint
 │       ├── offers/collect/  triggers a collection run (the "Inserate suchen" button)
 │       ├── vermittlungsbuero/draft/   calls the extension endpoint (ticker text)
+│       ├── wohnungen/{collect,draft,from-url}/   the Wohnungen collector's endpoints
 │       └── health/          docker healthcheck
-├── components/              MUI components (OffersPanel + presentational cards); *.test.tsx next to them
-├── graphql/                 gql documents + result types, one file per collection (offers.ts)
+├── components/              MUI components (Offers*/Wohnung* panels + presentational cards); *.test.tsx next to them
+├── graphql/                 gql documents + result types, one file per collection (offers.ts, wohnungen.ts, quellen.ts)
 └── lib/
     ├── apollo.ts            client factory (points at /api/graphql)
     ├── theme.ts             the single MUI theme
     ├── offers.ts            pure presentation helpers (tested)
+    ├── wohnungen.ts         pure presentation helpers for flats — CHF/rent-per-m² format, criteria badge (tested)
     ├── directus.server.ts   server-only: login/refresh/logout/fetch
     ├── session.server.ts    server-only: the two httpOnly cookies
     └── proxy.server.ts      server-only: browser request → Directus request
@@ -146,7 +148,18 @@ replayed after a token refresh.
   (`OfferCard.test.tsx`, `TickerDraft.test.tsx`) — that is also how the accessible name
   gets checked.
 - Keep components presentational (props in, callbacks out); the one component that
-  fetches (`OffersPanel`) stays thin so everything else is trivially testable.
+  fetches per collector (`OffersPanel`, `WohnungenPanel`) stays thin so everything else
+  is trivially testable.
+
+## Multi-collector shell
+
+`AppShell` gates on the session, then shows a MUI `Tabs` switcher (no router) between the
+collectors and renders one panel — `OffersPanel` (Vermittlungsbüro) or `WohnungenPanel`
+(Wohnungen). Each panel owns its queries, the collect button, the draft generation and
+its list. `SourcesManager` is shared and takes a `collector` prop
+(`vermittlungsbuero | wohnungen`); it filters and tags `quellen` rows by it, so each panel
+sees only its own custom sources. To add a collector: a new `<Thing>Panel`, `graphql/<thing>.ts`,
+`lib/<thing>.ts`, route proxies under `app/api/<thing>/`, and a tab — see the root recipe.
 
 ## Environment
 

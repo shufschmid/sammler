@@ -9,6 +9,7 @@ export interface QuelleFields {
   url: string
   needs_playwright: boolean
   active: boolean
+  collector: string
   date_created: string | null
 }
 
@@ -16,14 +17,17 @@ export interface QuellenQueryResult {
   quellen: QuelleFields[]
 }
 
+// Filtered by collector so each panel manages only its own sources (vermittlungsbuero
+// vs. wohnungen). Pass filter: { collector: { _eq: <collector> } }.
 export const QUELLEN_QUERY = gql`
-  query Quellen {
-    quellen(sort: ["-date_created"], limit: 100) {
+  query Quellen($filter: quellen_filter) {
+    quellen(filter: $filter, sort: ["-date_created"], limit: 100) {
       id
       name
       url
       needs_playwright
       active
+      collector
       date_created
     }
   }
@@ -34,8 +38,16 @@ export interface CreateQuelleResult {
 }
 
 export const CREATE_QUELLE_MUTATION = gql`
-  mutation CreateQuelle($name: String!, $url: String!, $needs_playwright: Boolean) {
-    create_quellen_item(data: { name: $name, url: $url, needs_playwright: $needs_playwright, active: true }) {
+  mutation CreateQuelle($name: String!, $url: String!, $needs_playwright: Boolean, $collector: String) {
+    create_quellen_item(
+      data: {
+        name: $name
+        url: $url
+        needs_playwright: $needs_playwright
+        collector: $collector
+        active: true
+      }
+    ) {
       id
     }
   }
