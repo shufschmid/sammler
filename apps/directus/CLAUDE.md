@@ -236,11 +236,14 @@ This project's own variables, besides `ANTHROPIC_*`:
   `offers-collect` operation logs and skips the web sources (`crawlerConfigured()`),
   and only manual entries are classified. `requireEnv` inside `shared/crawler.ts` fires
   only when a scrape is actually attempted.
-- `MAILBOX_HOST` / `MAILBOX_PORT` (default 993) / `MAILBOX_USER` / `MAILBOX_PASSWORD` —
-  IMAP mailbox (wepublish infra) read by `wohnungen-collect`. Optional at boot: without
-  host/user/password the IMAP pass is skipped (`mailboxConfigured()`). All access goes
-  through `shared/mailbox.ts`, which marks each read message `\Seen` (that flag is the
-  only dedup — no local state, constraint 5).
+- `IMAP_HOST` / `IMAP_PORT` (default 993) / `IMAP_SECURE` (default true) / `IMAP_USER` /
+  `IMAP_PASSWORD` / `IMAP_MAILBOX` (default INBOX) — IMAP mailbox (wepublish infra) read by
+  `wohnungen-collect`. Optional at boot: without host/user/password the IMAP pass is skipped
+  (`mailboxConfigured()`). All access goes through `shared/mailbox.ts`, which marks each read
+  message `\Seen` (that flag is the only dedup — no local state, constraint 5).
+- `IMAP_WOHNUNGEN_TO` — the postfach is shared across projects, so this collector only takes
+  mail whose To header contains this plus-alias (e.g. `user+wohnungen@…` or just
+  `+wohnungen`). Empty = the whole inbox. Passed as `toFilter` into `fetchUnreadMail`.
 - `WOHNUNGEN_LISTE_URL` — the public flat-list page linked in the `wohnungen-draft`
   closing line. `optionalEnv`, default `https://bajour.ch/freie-wohnungen-basel`. Only
   needed if that URL changes; not required in `.env`/compose to boot.

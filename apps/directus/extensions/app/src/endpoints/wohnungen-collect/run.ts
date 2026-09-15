@@ -1,5 +1,6 @@
 import { completeJson } from '../../shared/claude'
 import { crawlerConfigured } from '../../shared/crawler'
+import { optionalEnv } from '../../shared/env'
 import { collectFromPages, type PageSource } from '../../shared/collect-pages'
 import {
   fetchUnreadMail,
@@ -214,9 +215,15 @@ export async function runWohnungenCollect(
   }
 
   // Pass 2 — unread newsletter/reader mail over IMAP. Each message may hold several flats.
+  // The postfach is shared, so we only take mail addressed to the wohnungen plus-alias
+  // (IMAP_WOHNUNGEN_TO, e.g. "user+wohnungen@…" or just "+wohnungen"); empty = whole inbox.
   if (mailConfigured) {
     try {
-      const mails = await fetchMail(MAX_MAILS_PER_RUN)
+      const toFilter = optionalEnv('IMAP_WOHNUNGEN_TO', '')
+      const mails = await fetchMail(
+        MAX_MAILS_PER_RUN,
+        toFilter ? { toFilter } : {}
+      )
       renderers.add('imap')
       for (const mail of mails) {
         try {

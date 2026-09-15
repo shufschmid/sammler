@@ -36,9 +36,9 @@ describe('bodyText', () => {
 describe('mailboxConfigured', () => {
   const orig = { ...process.env }
   const reset = () => {
-    delete process.env.MAILBOX_HOST
-    delete process.env.MAILBOX_USER
-    delete process.env.MAILBOX_PASSWORD
+    delete process.env.IMAP_HOST
+    delete process.env.IMAP_USER
+    delete process.env.IMAP_PASSWORD
   }
 
   it('is false without host/user/password', () => {
@@ -49,10 +49,10 @@ describe('mailboxConfigured', () => {
 
   it('is true only when all three are set', () => {
     reset()
-    process.env.MAILBOX_HOST = 'taylor.mxrouting.net'
-    process.env.MAILBOX_USER = 'wohnungen@example.ch'
+    process.env.IMAP_HOST = 'taylor.mxrouting.net'
+    process.env.IMAP_USER = 'wohnungen@example.ch'
     expect(mailboxConfigured()).toBe(false)
-    process.env.MAILBOX_PASSWORD = 'secret'
+    process.env.IMAP_PASSWORD = 'secret'
     expect(mailboxConfigured()).toBe(true)
     reset()
     Object.assign(process.env, orig)
