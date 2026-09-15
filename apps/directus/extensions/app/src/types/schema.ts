@@ -52,9 +52,13 @@ export interface Offer {
   date_updated: string | null
 }
 
-/** A source the redaction added in the dashboard for offers-collect to search. */
+/** Which Sammler activity a custom source belongs to. */
+export type Collector = 'vermittlungsbuero' | 'wohnungen'
+
+/** A source the redaction added in the dashboard for a collect run to search. */
 export interface Quelle {
   id: string
+  collector: Collector
   name: string
   url: string
   needs_playwright: boolean
@@ -62,7 +66,65 @@ export interface Quelle {
   date_created: string | null
 }
 
+// Wohnungen: one cheap-apartment listing collected for the weekly briefing box.
+
+export type WohnungStatus =
+  | 'neu'
+  | 'geprueft'
+  | 'aufgenommen'
+  | 'im_briefing'
+  | 'weg'
+  | 'verworfen'
+
+export type WohnungSource =
+  | 'unimarkt'
+  | 'immobilien_bs'
+  | 'genossenschaft'
+  | 'homegate'
+  | 'immoscout'
+  | 'flatfox'
+  | 'facebook'
+  | 'mail'
+  | 'manuell'
+  | 'custom'
+
+export interface Wohnung {
+  id: string
+  status: WohnungStatus
+  source: WohnungSource
+  source_id: string | null
+  /** Link to the listing. Unique = dedup key. */
+  source_url: string | null
+  plattform: string | null
+  titel: string
+  beschreibung: string | null
+  zimmer: number | null
+  flaeche_m2: number | null
+  miete_chf: number | null
+  /** Computed in the hook: miete_chf / flaeche_m2. */
+  miete_pro_m2: number | null
+  adresse: string | null
+  plz: string | null
+  quartier: string | null
+  listed_at: string | null
+  // Claude-extracted criteria flags.
+  ai_genossenschaft: boolean | null
+  ai_moebliert: boolean | null
+  ai_untermiete: boolean | null
+  ai_befristet: boolean | null
+  ai_wg: boolean | null
+  /** Meets the criteria — computed in the hook, not by Claude. */
+  ai_passt: boolean | null
+  ai_passt_grund: string | null
+  /** The two-sentence briefing text. */
+  ai_kurztext: string | null
+  ai_generated_at: string | null
+  date_created: string | null
+  date_updated: string | null
+}
+
 export interface Schema {
   offers: Offer[]
   quellen: Quelle[]
+  wohnungen: Wohnung[]
 }

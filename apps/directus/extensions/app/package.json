@@ -34,6 +34,34 @@
         "type": "endpoint",
         "name": "offers-collect",
         "source": "src/endpoints/offers-collect/index.ts"
+      },
+      {
+        "type": "endpoint",
+        "name": "wohnungen-collect",
+        "source": "src/endpoints/wohnungen-collect/index.ts"
+      },
+      {
+        "type": "endpoint",
+        "name": "wohnungen-from-url",
+        "source": "src/endpoints/wohnungen-from-url/index.ts"
+      },
+      {
+        "type": "endpoint",
+        "name": "wohnungen-draft",
+        "source": "src/endpoints/wohnungen-draft/index.ts"
+      },
+      {
+        "type": "hook",
+        "name": "wohnungen-normalize",
+        "source": "src/hooks/wohnungen-normalize/index.ts"
+      },
+      {
+        "type": "operation",
+        "name": "wohnungen-weekly",
+        "source": {
+          "app": "src/operations/wohnungen-collect/app.ts",
+          "api": "src/operations/wohnungen-collect/api.ts"
+        }
       }
     ],
     "host": "^11.0.0"
@@ -50,12 +78,15 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.115.0",
-    "@directus/errors": "^2.1.0"
+    "@directus/errors": "^2.1.0",
+    "imapflow": "^1.7.8",
+    "mailparser": "^3.9.28"
   },
   "devDependencies": {
     "@directus/extensions-sdk": "17.1.4",
     "@directus/types": "13.4.0",
     "@types/express": "4.17.21",
+    "@types/mailparser": "^3.4.6",
     "@types/node": "^22.15.30",
     "typescript": "^5.9.3",
     "vitest": "^4.1.4",

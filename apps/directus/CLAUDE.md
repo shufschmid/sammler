@@ -13,10 +13,11 @@ here.
 apps/directus/
 ├── extensions/app/          ← ALL server-side logic (one bundle, own package.json)
 │   └── src/
-│       ├── shared/          claude.ts · crawler.ts · env.ts · http.ts   (reusable, no domain logic)
-│       ├── endpoints/       offers-collect (scrape+classify) · vermittlungsbuero-draft (ticker)
-│       ├── hooks/           offers-normalize (trim + AI-cache invalidation)
-│       └── types/schema.ts  typed view of the collections (offers)
+│       ├── shared/          claude.ts · crawler.ts · mailbox.ts · collect-pages.ts · env.ts · http.ts
+│       ├── endpoints/       offers-collect · vermittlungsbuero-draft · wohnungen-collect · wohnungen-from-url · wohnungen-draft
+│       ├── hooks/           offers-normalize · wohnungen-normalize (trim + compute rent/m² + criteria verdict)
+│       ├── operations/      wohnungen-collect (Flow op "wohnungen-weekly", weekly schedule)
+│       └── types/schema.ts  typed view of the collections (offers, quellen, wohnungen)
 ├── extensions/.registry/    marketplace extension: TypeScript type generator
 ├── migrations/              empty by design — row data only, never the model
 ├── schema/                  directus-sync dump — the data model, single source of truth
@@ -235,6 +236,14 @@ This project's own variables, besides `ANTHROPIC_*`:
   `offers-collect` operation logs and skips the web sources (`crawlerConfigured()`),
   and only manual entries are classified. `requireEnv` inside `shared/crawler.ts` fires
   only when a scrape is actually attempted.
+- `MAILBOX_HOST` / `MAILBOX_PORT` (default 993) / `MAILBOX_USER` / `MAILBOX_PASSWORD` —
+  IMAP mailbox (wepublish infra) read by `wohnungen-collect`. Optional at boot: without
+  host/user/password the IMAP pass is skipped (`mailboxConfigured()`). All access goes
+  through `shared/mailbox.ts`, which marks each read message `\Seen` (that flag is the
+  only dedup — no local state, constraint 5).
+- `WOHNUNGEN_LISTE_URL` — the public flat-list page linked in the `wohnungen-draft`
+  closing line. `optionalEnv`, default `https://bajour.ch/freie-wohnungen-basel`. Only
+  needed if that URL changes; not required in `.env`/compose to boot.
 
 ## The Vermittlungsbüro feature
 
@@ -266,6 +275,38 @@ Trommelmärsche") so the UI keeps it interesting past the one-month recency wind
 
 Source adapters are pure Markdown parsers (fixture-tested); everything else follows the
 same prompt-module + validate + fields-mapping split as the rest of the bundle.
+
+## The Wohnungen feature
+
+The second collector: cheap Basel flats for the Basel Briefing's "Günstige Wohnungen"
+box. Collection `wohnungen`; sources come from built-in constants and from `quellen`
+rows with `collector = wohnungen`. Bundle entries:
+
+- `endpoints/wohnungen-collect` — same 202-fire-and-forget + GET-status shape as
+  `offers-collect`. `run.ts` (`runWohnungenCollect`) runs two passes: **web** via the
+  shared `shared/collect-pages.ts` helper (`collectFromPages` iterates `PageSource[]`,
+  scrapes each with pause + 429-retry + per-source error isolation, calls a `handle`
+  that does the Claude multi-extract + dedup + create), and **mail** via
+  `shared/mailbox.ts` (unread IMAP messages → Claude extract). Bounded by `collectLimit`,
+  dedup on `source_url` / `source`+slug. Both passes share one `store()` closure.
+- `endpoints/wohnungen-from-url` — "Inserat per Link erfassen": one pasted listing URL →
+  scrape (force Playwright for portals) → Claude **single** extract → create. Catches the
+  unique-violation as 409. Portals are captured this way, never bulk-scraped.
+- `endpoints/wohnungen-draft` — `POST { ids }` → the "Günstige Wohnungen" box in the
+  verified house style; Claude writes sentence + `linkText`, the server weaves the link
+  from stored `source_url` and appends the fixed closing line to `WOHNUNGEN_LISTE_URL`.
+- `hooks/wohnungen-normalize` — trims text and computes `miete_pro_m2` and the criteria
+  verdict (`ai_passt` / `ai_passt_grund`) via `criteria.ts` — **never Claude**. Rent/m² is
+  annual (`miete*12/flaeche`). Never hard-drops a listing; a failing one stays visible.
+- `operations/wohnungen-collect` — Flow op (entry/id `wohnungen-weekly`, renamed to avoid
+  a bundle-name clash with the endpoint) calling the same `runWohnungenCollect`; wired to a
+  Schedule Flow `30 12 * * 2` (Tue 12:30 Zurich). This is the template's first live use of
+  the Flow-scheduling pattern (root constraint 8).
+
+Status lifecycle: `neu → geprueft → aufgenommen → im_briefing → weg/verworfen`.
+
+**`shared/collect-pages.ts`** and **`shared/mailbox.ts`** are collector-agnostic
+infrastructure — reuse them for the next collector rather than copying the loop.
 
 ## Types
 

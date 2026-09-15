@@ -6,10 +6,13 @@ import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import CircularProgress from '@mui/material/CircularProgress'
 import Container from '@mui/material/Container'
+import Tab from '@mui/material/Tab'
+import Tabs from '@mui/material/Tabs'
 import Toolbar from '@mui/material/Toolbar'
 import Typography from '@mui/material/Typography'
 import { LoginForm } from './LoginForm'
 import { OffersPanel } from './OffersPanel'
+import { WohnungenPanel } from './WohnungenPanel'
 
 interface SessionUser {
   email: string
@@ -18,6 +21,8 @@ interface SessionUser {
 
 type State = { status: 'loading' } | { status: 'anonymous' } | { status: 'signed-in'; user: SessionUser }
 
+type Collector = 'vermittlungsbuero' | 'wohnungen'
+
 // Decides between the login form and the app.
 //
 // The session check runs in the browser, which also means no Apollo query is ever
@@ -25,6 +30,7 @@ type State = { status: 'loading' } | { status: 'anonymous' } | { status: 'signed
 // starts out in `loading`.
 export function AppShell() {
   const [state, setState] = useState<State>({ status: 'loading' })
+  const [collector, setCollector] = useState<Collector>('vermittlungsbuero')
 
   const check = useCallback(async () => {
     try {
@@ -77,7 +83,7 @@ export function AppShell() {
       >
         <Toolbar>
           <Typography variant="h1" component="h1" sx={{ flexGrow: 1, fontSize: '1.25rem' }}>
-            Vermittlungsbuero-Sammler
+            Sammler
           </Typography>
           <Typography
             variant="body2"
@@ -90,10 +96,18 @@ export function AppShell() {
             Abmelden
           </Button>
         </Toolbar>
+        <Tabs
+          value={collector}
+          onChange={(_event, value: Collector) => setCollector(value)}
+          sx={{ px: 2, borderTop: 1, borderColor: 'divider' }}
+        >
+          <Tab value="vermittlungsbuero" label="Vermittlungsbuero" />
+          <Tab value="wohnungen" label="Wohnungen" />
+        </Tabs>
       </AppBar>
 
       <Container maxWidth="md" sx={{ py: 3 }}>
-        <OffersPanel />
+        {collector === 'vermittlungsbuero' ? <OffersPanel /> : <WohnungenPanel />}
       </Container>
     </>
   )

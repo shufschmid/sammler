@@ -29,11 +29,17 @@ import {
 } from '@/graphql/quellen'
 import { LIVE_FETCH_POLICY } from '@/lib/apollo'
 
+export interface SourcesManagerProps {
+  /** Which collector these sources belong to — the manager filters and tags by it. */
+  collector: 'vermittlungsbuero' | 'wohnungen'
+}
+
 // Lets the redaction register extra sources (a URL with listings) that the collect run
 // searches. Self-contained: its own queries/mutations, rendered below the AppShell gate
-// so nothing runs during SSR.
-export function SourcesManager() {
+// so nothing runs during SSR. Scoped to one collector so each panel sees only its own.
+export function SourcesManager({ collector }: SourcesManagerProps) {
   const { data, refetch } = useQuery<QuellenQueryResult>(QUELLEN_QUERY, {
+    variables: { filter: { collector: { _eq: collector } } },
     fetchPolicy: LIVE_FETCH_POLICY
   })
   const [createQuelle, createState] = useMutation<CreateQuelleResult>(CREATE_QUELLE_MUTATION)
@@ -54,7 +60,7 @@ export function SourcesManager() {
     setProblem(null)
     try {
       await createQuelle({
-        variables: { name: name.trim(), url: url.trim(), needs_playwright: needsPlaywright }
+        variables: { name: name.trim(), url: url.trim(), needs_playwright: needsPlaywright, collector }
       })
       setName('')
       setUrl('')

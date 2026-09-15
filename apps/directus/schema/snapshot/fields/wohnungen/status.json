@@ -1,0 +1,99 @@
+{
+  "collection": "wohnungen",
+  "field": "status",
+  "type": "string",
+  "meta": {
+    "collection": "wohnungen",
+    "conditions": null,
+    "display": "labels",
+    "display_options": {
+      "choices": [
+        {
+          "text": "Neu",
+          "value": "neu"
+        },
+        {
+          "text": "Geprueft",
+          "value": "geprueft"
+        },
+        {
+          "text": "Aufgenommen",
+          "value": "aufgenommen"
+        },
+        {
+          "text": "Im Briefing",
+          "value": "im_briefing"
+        },
+        {
+          "text": "Weg",
+          "value": "weg"
+        },
+        {
+          "text": "Verworfen",
+          "value": "verworfen"
+        }
+      ],
+      "showAsDot": true
+    },
+    "field": "status",
+    "group": null,
+    "hidden": false,
+    "interface": "select-dropdown",
+    "note": null,
+    "options": {
+      "choices": [
+        {
+          "text": "Neu",
+          "value": "neu"
+        },
+        {
+          "text": "Geprueft",
+          "value": "geprueft"
+        },
+        {
+          "text": "Aufgenommen",
+          "value": "aufgenommen"
+        },
+        {
+          "text": "Im Briefing",
+          "value": "im_briefing"
+        },
+        {
+          "text": "Weg",
+          "value": "weg"
+        },
+        {
+          "text": "Verworfen",
+          "value": "verworfen"
+        }
+      ]
+    },
+    "readonly": false,
+    "required": false,
+    "searchable": true,
+    "sort": 2,
+    "special": null,
+    "translations": null,
+    "validation": null,
+    "validation_message": null,
+    "width": "full"
+  },
+  "schema": {
+    "name": "status",
+    "table": "wohnungen",
+    "data_type": "character varying",
+    "default_value": "neu",
+    "max_length": 32,
+    "numeric_precision": null,
+    "numeric_scale": null,
+    "is_nullable": false,
+    "is_unique": false,
+    "is_indexed": false,
+    "is_primary_key": false,
+    "is_generated": false,
+    "generation_expression": null,
+    "has_auto_increment": false,
+    "foreign_key_table": null,
+    "foreign_key_column": null
+  }
+}

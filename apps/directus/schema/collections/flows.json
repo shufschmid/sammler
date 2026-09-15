@@ -1,1 +1,16 @@
-[]
+[
+  {
+    "name": "Wohnungen: woechentlich sammeln",
+    "icon": "home",
+    "color": null,
+    "description": "Sammelt jeden Dienstag 12:30 guenstige Wohnungen aus Genossenschaften, Unimarkt und Immobilien BS.",
+    "status": "active",
+    "trigger": "schedule",
+    "accountability": "all",
+    "options": {
+      "cron": "30 12 * * 2"
+    },
+    "operation": "061eac32-ba03-45aa-b563-576f7bb87470",
+    "_syncId": "0b6bfe49-49ec-4f45-a432-991fc8f3bc33"
+  }
+]

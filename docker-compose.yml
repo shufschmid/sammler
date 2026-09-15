@@ -78,6 +78,14 @@ services:
       CRAWLER_URL: ${CRAWLER_URL:-https://crawler.wepublish.dev}
       CRAWLER_TOKEN: ${CRAWLER_TOKEN:-}
 
+      # Mailbox (wepublish shared infra): the wohnungen-collect Flow reads unread
+      # newsletter/reader mail over IMAP. Optional at boot — without these the IMAP
+      # pass is skipped and web sources + manual entry still work. PORT defaults to 993.
+      MAILBOX_HOST: ${MAILBOX_HOST:-}
+      MAILBOX_PORT: ${MAILBOX_PORT:-993}
+      MAILBOX_USER: ${MAILBOX_USER:-}
+      MAILBOX_PASSWORD: ${MAILBOX_PASSWORD:-}
+
       EXTENSIONS_PATH: ./extensions
       # Auto-reload watches the filesystem; pointless in an immutable image.
       EXTENSIONS_AUTO_RELOAD: 'false'
