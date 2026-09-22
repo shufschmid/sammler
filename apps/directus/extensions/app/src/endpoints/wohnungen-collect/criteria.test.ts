@@ -34,16 +34,21 @@ describe('evaluate', () => {
     expect(r.mieteProM2).toBe(240)
   })
 
-  it('passes but flags the 250–300 borderline band', () => {
+  it('passes but flags the 250–350 borderline band', () => {
     const r = evaluate(w({ miete_chf: 1618, flaeche_m2: 72 })) // 269.7
     expect(r.passt).toBe(true)
     expect(r.grund).toContain('grenzwertig')
   })
 
-  it('fails above 300', () => {
+  it('still passes just under the 350 cap', () => {
     const r = evaluate(w({ miete_chf: 2000, flaeche_m2: 70 })) // 342.9
+    expect(r.passt).toBe(true)
+  })
+
+  it('fails above 350', () => {
+    const r = evaluate(w({ miete_chf: 2100, flaeche_m2: 70 })) // 360
     expect(r.passt).toBe(false)
-    expect(r.grund).toContain('ueber 300')
+    expect(r.grund).toContain('ueber 350')
   })
 
   it('fails furnished / sublet / temporary / WG', () => {

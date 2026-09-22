@@ -4,8 +4,9 @@
 // is kept and marked, the redaction decides via status.
 //
 // Rules: no furnished / sublet / temporary / WG-room; only the city of Basel (PLZ 40xx);
-// price/m² per year ≤ 250 (that is monthly rent × 12 / m², exactly the "Miete / m2" column
-// in the redaction's spreadsheet), soft up to 300, never above 300.
+// price/m² per year ≤ 250 ideal (that is monthly rent × 12 / m², exactly the "Miete / m2"
+// column in the redaction's spreadsheet), 250–350 borderline but still passes, above 350
+// fails (≈ 29 CHF/m² per month).
 
 export interface CriteriaInput {
   zimmer: number | null
@@ -26,7 +27,7 @@ export interface CriteriaResult {
 }
 
 const RICHTWERT = 250 // ideal
-const MAX = 300 // "Allermaximal"
+const MAX = 350 // "Allermaximal" (≈ 29 CHF/m² pro Monat)
 
 /**
  * Annual rent per m² (monthly rent × 12 / m²), rounded to one decimal — the same figure
@@ -64,10 +65,18 @@ export function evaluate(w: CriteriaInput): CriteriaResult {
     return { passt: false, mieteProM2: preis, grund: 'nicht Stadt Basel' }
 
   if (preis === null)
-    return { passt: true, mieteProM2: null, grund: 'Preis/m2 unbekannt — bitte pruefen' }
+    return {
+      passt: true,
+      mieteProM2: null,
+      grund: 'Preis/m2 unbekannt — bitte pruefen'
+    }
 
   if (preis > MAX)
-    return { passt: false, mieteProM2: preis, grund: `Miete/m2/Jahr ${preis} ueber ${MAX}` }
+    return {
+      passt: false,
+      mieteProM2: preis,
+      grund: `Miete/m2/Jahr ${preis} ueber ${MAX}`
+    }
 
   const grund =
     preis > RICHTWERT
