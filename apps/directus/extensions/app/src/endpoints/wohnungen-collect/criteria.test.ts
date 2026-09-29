@@ -58,10 +58,35 @@ describe('evaluate', () => {
     expect(evaluate(w({ ai_wg: true })).grund).toBe('WG-Zimmer')
   })
 
-  it('requires the city of Basel (PLZ 40xx)', () => {
+  it('treats a PLZ as authoritative (40xx = city)', () => {
     expect(evaluate(w({ plz: '4127' })).passt).toBe(false) // Birsfelden
     expect(evaluate(w({ plz: '4125' })).passt).toBe(false) // Riehen
     expect(evaluate(w({ plz: '4051' })).passt).toBe(true)
+  })
+
+  it('passes a Basel quarter without PLZ (Unimarkt "Am Ring")', () => {
+    const r = evaluate(w({ plz: null, adresse: 'Am Ring' }))
+    expect(r.passt).toBe(true)
+    expect(r.grund).not.toContain('nicht Stadt Basel')
+  })
+
+  it('passes a bare street or missing address rather than hiding it', () => {
+    expect(evaluate(w({ plz: null, adresse: 'Spalenring 42' })).passt).toBe(
+      true
+    )
+    expect(evaluate(w({ plz: null, adresse: null })).passt).toBe(true)
+  })
+
+  it('still rejects a named neighbouring municipality without PLZ', () => {
+    expect(
+      evaluate(w({ plz: null, adresse: 'Baslerstrasse 3, Allschwil' })).passt
+    ).toBe(false)
+    expect(
+      evaluate(w({ plz: null, adresse: 'Hauptstrasse 1, Muenchenstein' })).passt
+    ).toBe(false)
+    expect(
+      evaluate(w({ plz: null, adresse: 'Rainallee 81, Riehen' })).passt
+    ).toBe(false)
   })
 
   it('passes but flags when price is unknown', () => {
