@@ -305,6 +305,14 @@ rows with `collector = wohnungen`. Bundle entries:
   a bundle-name clash with the endpoint) calling the same `runWohnungenCollect`; wired to a
   Schedule Flow `30 12 * * 2` (Tue 12:30 Zurich). This is the template's first live use of
   the Flow-scheduling pattern (root constraint 8).
+- `operations/wohnungen-reevaluate` — Flow op on a **manual** Flow ("Wohnungen: alle neu
+  bewerten", on the `wohnungen` collection). Re-runs `criteria.ts` over the stored rows and
+  rewrites `miete_pro_m2` / `ai_passt` / `ai_passt_grund`. Needed because the hook only
+  judges on write and a collect run skips known listings (dedup on `source_url`), so
+  **changing a threshold leaves the existing rows on their old verdict**. Bounded by
+  `limit`, idempotent (unchanged rows are skipped), one bad row is logged and skipped. The
+  update payload carries only the three criteria columns, so the normalize hook does not
+  recompute over it. Run it after every change to `criteria.ts`.
 
 Status lifecycle: `neu → geprueft → aufgenommen → im_briefing → weg/verworfen`.
 

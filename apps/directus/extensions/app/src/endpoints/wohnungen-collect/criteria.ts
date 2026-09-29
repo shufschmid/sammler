@@ -3,9 +3,11 @@
 // `ai_passt_grund` and by the frontend filter. Never hard-drops a listing: a failing one
 // is kept and marked, the redaction decides via status.
 //
-// Rules: no furnished / sublet / temporary / WG-room; only the city of Basel (PLZ 40xx);
-// price/m² per year ≤ 250 (that is monthly rent × 12 / m², exactly the "Miete / m2" column
-// in the redaction's spreadsheet), soft up to 300, never above 300.
+// Rules: no furnished / sublet / temporary / WG-room; the city of Basel (PLZ 40xx, and
+// without a PLZ only rejected when another municipality is named — see istStadtBasel);
+// price/m² per year ≤ 250 ideal (that is monthly rent × 12 / m², exactly the "Miete / m2"
+// column in the redaction's spreadsheet), 250–350 borderline but still passes, above 350
+// fails (≈ 29 CHF/m² per month).
 
 export interface CriteriaInput {
   zimmer: number | null
@@ -26,7 +28,7 @@ export interface CriteriaResult {
 }
 
 const RICHTWERT = 250 // ideal
-const MAX = 300 // "Allermaximal"
+const MAX = 350 // "Allermaximal" (≈ 29 CHF/m² pro Monat)
 
 /**
  * Annual rent per m² (monthly rent × 12 / m²), rounded to one decimal — the same figure
@@ -40,12 +42,71 @@ export function mieteProM2(
   return Math.round(((miete * 12) / flaeche) * 10) / 10
 }
 
-/** True for a City-of-Basel address: PLZ 40xx, else an address mentioning Basel. */
+/** Lowercase + umlauts folded, so "Münchenstein" and "Muenchenstein" both match. */
+function normalize(text: string): string {
+  return text
+    .toLowerCase()
+    .replace(/ä/g, 'a')
+    .replace(/ö/g, 'o')
+    .replace(/ü/g, 'u')
+    .replace(/é/g, 'e')
+}
+
+/**
+ * Municipalities around Basel that are clearly NOT the city. Used only to *reject* — a
+ * name that is not on this list never rejects, so Basel quarters ("Am Ring", "Gundeli",
+ * …) and bare street names pass.
+ */
+const ANDERE_GEMEINDEN = [
+  'riehen',
+  'bettingen',
+  'binningen',
+  'bottmingen',
+  'allschwil',
+  'schonenbuch',
+  'schoenenbuch',
+  'oberwil',
+  'therwil',
+  'biel-benken',
+  'ettingen',
+  'reinach',
+  'aesch',
+  'pfeffingen',
+  'munchenstein',
+  'muenchenstein',
+  'muttenz',
+  'birsfelden',
+  'arlesheim',
+  'dornach',
+  'pratteln',
+  'augst',
+  'kaiseraugst',
+  'liestal',
+  'fullinsdorf',
+  'frenkendorf',
+  'rheinfelden',
+  'weil am rhein',
+  'lorrach',
+  'loerrach',
+  'saint-louis',
+  'huningue',
+  'hegenheim',
+  'village-neuf'
+]
+
+/**
+ * True for a City-of-Basel address. Deliberately lenient: a PLZ is authoritative (40xx =
+ * city), but without one we only reject when another municipality is named. Anything else
+ * — a Basel quarter like "Am Ring", a bare street, no address at all — passes, and the
+ * redaction decides. A false positive costs one glance; a false negative hides a flat.
+ */
 function istStadtBasel(plz: string | null, adresse: string | null): boolean {
-  const p = (plz ?? '').trim()
-  if (/^40\d\d$/.test(p)) return true
-  if (p !== '') return false // a PLZ outside 40xx is not the city
-  return (adresse ?? '').toLowerCase().includes('basel')
+  const code = (plz ?? '').match(/\b(\d{4})\b/)?.[1] ?? null
+  if (code !== null) return /^40\d\d$/.test(code)
+
+  const ort = normalize(`${plz ?? ''} ${adresse ?? ''}`)
+  if (ANDERE_GEMEINDEN.some((g) => ort.includes(g))) return false
+  return true
 }
 
 export function evaluate(w: CriteriaInput): CriteriaResult {
@@ -64,10 +125,18 @@ export function evaluate(w: CriteriaInput): CriteriaResult {
     return { passt: false, mieteProM2: preis, grund: 'nicht Stadt Basel' }
 
   if (preis === null)
-    return { passt: true, mieteProM2: null, grund: 'Preis/m2 unbekannt — bitte pruefen' }
+    return {
+      passt: true,
+      mieteProM2: null,
+      grund: 'Preis/m2 unbekannt — bitte pruefen'
+    }
 
   if (preis > MAX)
-    return { passt: false, mieteProM2: preis, grund: `Miete/m2/Jahr ${preis} ueber ${MAX}` }
+    return {
+      passt: false,
+      mieteProM2: preis,
+      grund: `Miete/m2/Jahr ${preis} ueber ${MAX}`
+    }
 
   const grund =
     preis > RICHTWERT

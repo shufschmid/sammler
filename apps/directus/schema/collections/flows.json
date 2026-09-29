@@ -12,5 +12,22 @@
     },
     "operation": "061eac32-ba03-45aa-b563-576f7bb87470",
     "_syncId": "0b6bfe49-49ec-4f45-a432-991fc8f3bc33"
+  },
+  {
+    "name": "Wohnungen: alle neu bewerten",
+    "icon": "calculate",
+    "color": null,
+    "description": "Rechnet Miete/m2 und die Kriterien fuer die gespeicherten Wohnungen neu - nach einer Aenderung der Schwellenwerte einmal ausloesen.",
+    "status": "active",
+    "trigger": "manual",
+    "accountability": "all",
+    "options": {
+      "collections": ["wohnungen"],
+      "location": "collection",
+      "requireConfirmation": true,
+      "confirmationDescription": "Alle gespeicherten Wohnungen neu bewerten?"
+    },
+    "operation": "2e9b4d17-6c58-4a3f-9e02-7b1d5f8c4a63",
+    "_syncId": "7c3f1a52-9d84-4e2b-b1a7-3f5c8e0d6a91"
   }
 ]

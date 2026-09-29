@@ -62,6 +62,14 @@
           "app": "src/operations/wohnungen-collect/app.ts",
           "api": "src/operations/wohnungen-collect/api.ts"
         }
+      },
+      {
+        "type": "operation",
+        "name": "wohnungen-reevaluate",
+        "source": {
+          "app": "src/operations/wohnungen-reevaluate/app.ts",
+          "api": "src/operations/wohnungen-reevaluate/api.ts"
+        }
       }
     ],
     "host": "^11.0.0"
