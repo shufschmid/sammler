@@ -13,5 +13,19 @@
     "reject": null,
     "flow": "0b6bfe49-49ec-4f45-a432-991fc8f3bc33",
     "_syncId": "061eac32-ba03-45aa-b563-576f7bb87470"
+  },
+  {
+    "name": "Wohnungen neu bewerten",
+    "key": "wohnungen_neu_bewerten",
+    "type": "wohnungen-reevaluate",
+    "position_x": 19,
+    "position_y": 1,
+    "options": {
+      "limit": 1000
+    },
+    "resolve": null,
+    "reject": null,
+    "flow": "7c3f1a52-9d84-4e2b-b1a7-3f5c8e0d6a91",
+    "_syncId": "2e9b4d17-6c58-4a3f-9e02-7b1d5f8c4a63"
   }
 ]
