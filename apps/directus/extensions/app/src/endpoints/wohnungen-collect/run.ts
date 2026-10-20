@@ -24,6 +24,9 @@ import { WOHNUNG_SOURCES } from './sources'
 // One dead source is logged and skipped. Runs from a Schedule Flow (weekly) and a button.
 
 const MAX_MAILS_PER_RUN = 30
+// A list page can hold 15+ flats; at ~250 output tokens per entry 4096 was hit by the IBS
+// portal (16 listings) and a truncated answer is an error, not a partial result.
+const EXTRACT_MAX_TOKENS = 8192
 
 export interface WohnungCollectOptions {
   collectLimit: number
@@ -193,7 +196,7 @@ export async function runWohnungenCollect(
           await completeJson<unknown>({
             system: EXTRACT_MANY_SYSTEM_PROMPT,
             prompt: buildExtractManyPrompt(src.name, src.url, markdown),
-            maxTokens: 4096,
+            maxTokens: EXTRACT_MAX_TOKENS,
             ...modelOption
           })
         )
@@ -235,7 +238,7 @@ export async function runWohnungenCollect(
                 mail.from,
                 mail.text
               ),
-              maxTokens: 4096,
+              maxTokens: EXTRACT_MAX_TOKENS,
               ...modelOption
             })
           )

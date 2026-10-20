@@ -24,6 +24,7 @@ export const EXTRACT_MANY_SYSTEM_PROMPT = [
   'Gib genau ein JSON-Objekt {"wohnungen": [...]} zurueck.',
   'Jeder Eintrag: {"titel": string, "zimmer": number|null, "flaeche_m2": number|null, "miete_chf": number|null, "adresse": string|null, "plz": string|null, "quartier": string|null, "genossenschaft": boolean, "moebliert": boolean, "untermiete": boolean, "befristet": boolean, "wg": boolean, "link": string|null}.',
   'Gibt es keine freien Wohnungen, ist "wohnungen" ein leeres Array.',
+  'Antworte nur mit dem JSON, kompakt und ohne Erklaerungen.',
   ...FIELD_RULES
 ].join('\n')
 
