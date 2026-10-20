@@ -201,6 +201,10 @@ const validated = parseSummary(answer) // never trust the shape
 - `completeText` / `completeJson` throw `ClaudeTruncatedError` when the model hit
   `max_tokens`. A truncated answer looks valid to the caller and truncated JSON is
   the classic silent failure — never "recover" by using a partial answer.
+- Extended thinking is **off by default**. Claude 5 models think before answering
+  unless told not to, and those tokens count towards `max_tokens` — a 16-row list
+  extraction hit the limit with half the budget spent on reasoning. Pass `thinking`
+  in the request only for a call that genuinely benefits from it.
 - `completeJson` strips code fences and surrounding prose (`extractJson`), but the
   type parameter is a promise, not a proof. Validate before writing to a collection.
 - Both take an optional `MessageSender` so tests inject a stub and never hit the
