@@ -18,16 +18,15 @@ export const WOHNUNG_SOURCES: PageSource[] = [
     url: 'https://markt.unibas.ch/category/wohnen-angebot',
     needsPlaywright: true
   },
+  // IBS publishes its listings on portal.immobilienbs.ch; the bs.ch "Freie Mietobjekte"
+  // page only embeds that list in an iframe (invisible to the crawler) and
+  // www.immobilienbs.ch has been unreachable since Oct 2026. The plain fetch returns all
+  // listings compactly; Playwright adds ~25k chars of filter UI that would push the last
+  // listings past the extraction prompt's cut-off.
   {
     source: 'immobilien_bs',
     name: 'Immobilien Basel-Stadt (IBS)',
-    url: 'https://www.bs.ch/fd/ibs/ibs-mietportal',
-    needsPlaywright: false
-  },
-  {
-    source: 'immobilien_bs',
-    name: 'Immobilien Basel',
-    url: 'https://www.immobilienbs.ch/miete/',
+    url: 'https://portal.immobilienbs.ch/inserate/',
     needsPlaywright: false
   },
   // Wohngenossenschaften / Stiftungen
