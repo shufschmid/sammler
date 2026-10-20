@@ -61,6 +61,23 @@ describe('completeText', () => {
     )
   })
 
+  it('disables extended thinking unless a config is passed', async () => {
+    const send = vi.fn<MessageSender>().mockResolvedValue(message('ok'))
+
+    await completeText({ prompt: 'frage' }, send)
+    expect(send.mock.calls[0]?.[0]).toMatchObject({
+      thinking: { type: 'disabled' }
+    })
+
+    await completeText(
+      { prompt: 'frage', thinking: { type: 'adaptive' } },
+      send
+    )
+    expect(send.mock.calls[1]?.[0]).toMatchObject({
+      thinking: { type: 'adaptive' }
+    })
+  })
+
   it('omits temperature when it was not requested', async () => {
     const send = vi.fn<MessageSender>().mockResolvedValue(message('ok'))
 

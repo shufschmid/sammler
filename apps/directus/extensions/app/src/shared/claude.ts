@@ -41,6 +41,13 @@ export interface ClaudeRequest {
   model?: string
   maxTokens?: number
   temperature?: number
+  /**
+   * Extended thinking. Off by default: Claude 5 models think before answering unless told
+   * not to, and those thinking tokens count towards max_tokens — a 16-row extraction then
+   * hits the limit with half the budget spent on reasoning nobody reads. Pass an explicit
+   * config for a call that benefits from it.
+   */
+  thinking?: Anthropic.ThinkingConfigParam
 }
 
 /**
@@ -83,6 +90,7 @@ export async function completeText(
     model: request.model ?? optionalEnv('ANTHROPIC_MODEL', DEFAULT_MODEL),
     max_tokens: maxTokens,
     messages: [{ role: 'user', content: request.prompt }],
+    thinking: request.thinking ?? { type: 'disabled' },
     ...(request.system === undefined ? {} : { system: request.system }),
     ...(request.temperature === undefined
       ? {}
